@@ -1,0 +1,19 @@
+{
+  "name": "rope-node-js",
+  "version": "0.0.1",
+  "description": "rope: registry for public kites",
+  "main": "rope.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/koding/rope"
+  },
+  "keywords": ["kite", "rpc", "microservice"],
+  "author": "Gokmen Goksel",
+  "license": "MIT",
+  "dependencies": {
+    "kite.js": "^1.0.12"
+  }
+}

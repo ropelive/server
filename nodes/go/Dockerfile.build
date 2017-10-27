@@ -1,0 +1,12 @@
+FROM golang:latest
+
+RUN mkdir -p /go/src/rope-node
+ADD . /go/src/rope-node/
+WORKDIR /go/src/rope-node
+
+RUN go get
+RUN go build
+
+# needs to be exposed over a tunnel
+# ENV ROPEHOST http://0.0.0.0:3210
+ENTRYPOINT ["/go/bin/rope-node"]

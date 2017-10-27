@@ -1,0 +1,65 @@
+# This will create two servers on provided AWS account
+# One for the rope server itself which will be running on `secure`.{cfdomain}
+# Other for webserver which runs on `{cfdomain}`
+
+provider:
+  aws:
+    access_key: '${var.aws_access_key}'
+    secret_key: '${var.aws_secret_key}'
+  cloudflare:
+    email: '${var.custom_cfemail}'
+    token: '${var.custom_cftoken}'
+
+resource:
+  aws_instance:
+    rope-server:
+      instance_type: 't2.nano'
+      tags:
+        Name: 'rope-server'
+      user_data: |-
+        # Install docker first:
+        curl --silent --location https://get.docker.com/ | sh
+
+        # Then run rope on 80
+        docker run --restart=always -d -p80:8080 --name rope gokmen/rope
+
+    rope-webserver:
+      instance_type: 't2.nano'
+      tags:
+        Name: 'rope-webserver'
+      user_data: |-
+        # Install docker first:
+        curl --silent --location https://get.docker.com/ | sh
+
+        # Run sample nodes in Node.js and Go
+        docker run --restart=always -d --name rope-node-go gokmen/rope-node-go
+        docker run --restart=always -d --name rope-node-js gokmen/rope-node-js
+
+        # Run rope-home to serve rope homepage
+        docker run --restart=always -p80:80 -d --name rope-home gokmen/rope-home
+
+  aws_eip:
+    rope-server:
+      instance: "${aws_instance.rope-server.id}"
+    rope-webserver:
+      instance: "${aws_instance.rope-webserver.id}"
+
+  cloudflare_record:
+    ropeweb:
+      domain: "${var.custom_cfdomain}"
+      name: "${var.custom_cfdomain}"
+      value: "${aws_eip.rope-webserver.public_ip}"
+      type: "A"
+      ttl: 3600
+    ropewww:
+      domain: "${var.custom_cfdomain}"
+      name: "www"
+      value: "${aws_eip.rope-webserver.public_ip}"
+      type: "A"
+      ttl: 3600
+    rope:
+      domain: "${var.custom_cfdomain}"
+      name: "secure"
+      value: "${aws_eip.rope-server.public_ip}"
+      type: "A"
+      ttl: 3600

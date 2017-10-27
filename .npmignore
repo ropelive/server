@@ -1,0 +1,11 @@
+*.log
+/.*/
+/coverage/
+/docs/
+/nodes/
+/examples/
+/test/
+/.gitignore
+/.npmignore
+/.travis.yml
+/src
