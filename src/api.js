@@ -61,7 +61,16 @@ export default class RopeApi {
 
   @shareAs('run')
   runOnKite(options, callback) {
-    const { kiteId, method, args = [] } = options.args
+    let { kiteId, method, args = [] } = options.args
+
+    if (!kiteId) {
+      let kites = this.filterByMethod(method)
+      kiteId = kites[Math.floor(Math.random() * kites.length)]
+    }
+
+    if (!kiteId) {
+      return callback({ message: 'No kite available' })
+    }
 
     this.ctx.connections
       .get(kiteId)
@@ -94,6 +103,17 @@ export default class RopeApi {
         message: `Now ubsubscribed from ${eventName}`,
       })
     )
+  }
+
+  filterByMethod(method) {
+    let res = []
+    for (let [kiteId, connection] of this.ctx.connections) {
+      if (connection.api.includes(method)) {
+        res.push(kiteId)
+      }
+      if (res.length >= MAX_QUERY_LIMIT) break
+    }
+    return res
   }
 
   notifyNodes(event, kiteId) {
