@@ -1,8 +1,9 @@
 FROM mhart/alpine-node:8
 
-WORKDIR .
+WORKDIR /opt/rope
+
 ADD . .
 
-EXPOSE 3210
+RUN npm run build
 
-CMD ["npm", "start"]
+EXPOSE 3210
