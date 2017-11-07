@@ -1,0 +1,12 @@
+version: '2'
+services:
+  base:
+    build: .
+    image: ropelive/server
+    restart: on-failure
+
+  counter:
+    extends: base
+    ports:
+    - "3210:3210"
+    command: npm start
