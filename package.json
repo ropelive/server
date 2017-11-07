@@ -6,12 +6,13 @@
   "scripts": {
     "clean": "rm -rf ./lib",
     "start": "babel-node src/run.js",
+    "pretest": "npm run build",
     "test": "jest src",
     "test:watch": "npm test -- --watch",
-    "prebuild": "npm run clean",
+    "prebuild": "npm install && npm run clean",
     "build": "babel src --out-dir lib --ignore test.js",
     "build:watch": "babel src --watch --out-dir lib --ignore test.js",
-    "prepublishOnly": "npm run test && npm run build"
+    "prepublishOnly": "npm test"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
@@ -29,12 +30,7 @@
     "type": "git",
     "url": "github.com/ropelive/server"
   },
-  "keywords": [
-    "rope",
-    "kite",
-    "rpc",
-    "microservice"
-  ],
+  "keywords": ["rope", "kite", "rpc", "microservice"],
   "author": "Gokmen Goksel",
   "license": "MIT",
   "dependencies": {
