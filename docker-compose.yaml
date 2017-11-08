@@ -5,7 +5,7 @@ services:
     image: ropelive/server
     restart: on-failure
 
-  counter:
+  server:
     extends: base
     ports:
     - "3210:3210"
