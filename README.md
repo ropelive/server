@@ -1,6 +1,6 @@
 ![](https://raw.githubusercontent.com/ropelive/press/master/banners/rope-server-js.png)
 
-[![Build Status](https://travis-ci.org/ropelive/server.svg?branch=master)](https://travis-ci.org/ropelive/server)
+[![CircleCI](https://circleci.com/gh/ropelive/server/tree/master.svg?style=svg)](https://circleci.com/gh/ropelive/server/tree/master)
 [![NPM version](https://img.shields.io/npm/v/@rope/server.svg?style=flat-square)](https://www.npmjs.com/package/@rope/server)
 
 Rope is a public Kite registry with proxy support between kites. Also
