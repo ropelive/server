@@ -161,7 +161,13 @@ export default class RopeApi {
   getConnection(requester) {
     const connection = this.ctx.connections.get(requester)
     if (!connection || !connection.api.includes('rope.notify'))
-      return [{ message: 'Notifications not supported for this node' }]
+      return [
+        {
+          message: `Notifications not supported for this node,
+                    please provide a method named "rope.notify"
+                    in the API first.`,
+        },
+      ]
     return [null, connection]
   }
 

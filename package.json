@@ -30,7 +30,12 @@
     "type": "git",
     "url": "github.com/ropelive/server"
   },
-  "keywords": ["rope", "kite", "rpc", "microservice"],
+  "keywords": [
+    "rope",
+    "kite",
+    "rpc",
+    "microservice"
+  ],
   "author": "Gokmen Goksel",
   "license": "MIT",
   "dependencies": {
