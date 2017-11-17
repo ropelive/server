@@ -89,14 +89,14 @@ export default class Server extends KiteServer {
           connectedFrom: remoteIp,
         })
 
-        this.ropeApi.notifyNodes('node.added', kiteId)
+        this.ropeApi.notifyNodes('node.added', { kiteId })
         this.ropeApi.logConnections()
 
         connection.on('close', () => {
           this.logger.info('A kite left the facility :(', kiteId)
           this.ctx.connections.delete(kiteId)
           this.ropeApi.unsubscribeFromAll(kiteId)
-          this.ropeApi.notifyNodes('node.removed', kiteId)
+          this.ropeApi.notifyNodes('node.removed', { kiteId })
           this.ropeApi.logConnections()
         })
         return info

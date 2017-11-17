@@ -116,10 +116,15 @@ export default class RopeApi {
     return res
   }
 
-  notifyNodes(event, kiteId) {
-    const kiteInfo = this.ctx.getKiteDetails(kiteId)
-    const notification = { event, kiteInfo }
+  notifyNodes(event, data) {
+    const notification = { event }
 
+    if (data.kiteId) {
+      notification.kiteInfo = this.ctx.getKiteDetails(data.kiteId)
+      delete data.kiteId
+    }
+
+    notification.data = data
     this.logger.info('notifying', this.ctx.events.get(event))
 
     for (let node of this.ctx.events.get(event)) {
