@@ -2,6 +2,7 @@ export default class RopeContext {
   constructor() {
     this.connections = new Map()
     this.events = new Map([
+      ['node.exec', new Set()],
       ['node.added', new Set()],
       ['node.removed', new Set()],
     ])

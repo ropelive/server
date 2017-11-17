@@ -61,7 +61,7 @@ export default class RopeApi {
 
   @shareAs('run')
   runOnKite(options, callback) {
-    let { kiteId, method, args = [] } = options.args
+    let { requester, args: { kiteId, method, args = [] } } = options
 
     if (!kiteId) {
       let kites = this.filterByMethod(method)
@@ -71,6 +71,8 @@ export default class RopeApi {
     if (!kiteId) {
       return callback({ message: 'No kite available' })
     }
+
+    this.notifyNodes('node.exec', { from: requester, to: kiteId, method })
 
     this.ctx.connections
       .get(kiteId)
