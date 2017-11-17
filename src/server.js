@@ -107,7 +107,7 @@ export default class Server extends KiteServer {
         this.ctx.blackListCandidates[remoteIp] |= 0
         this.ctx.blackListCandidates[remoteIp]++
         if (this.ctx.blackListCandidates[remoteIp] > BLACKLIST_LIMIT) {
-          this.logger.log(`Connections from ${remoteIp} blacklisted`)
+          this.logger.info(`Connections from ${remoteIp} blacklisted`)
           this.ctx.blackList.add(remoteIp)
         }
         connection.close()
