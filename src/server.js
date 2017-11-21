@@ -49,6 +49,19 @@ export default class Server extends KiteServer {
     this.ropeApi.logConnections()
   }
 
+  authenticateKite(token, callback) {
+    if (!token) {
+      callback(null, { authenticated: false })
+      return
+    }
+
+    this.logger.info('Authentication requested with token', token)
+    this.logger.info('Authentication not implemented yet')
+
+    // TODO Implement verification token from AUTH_SERVER ~ GG
+    callback(null, { authenticated: false })
+  }
+
   registerConnection(connection) {
     const headers = connection.connection.headers || {}
     const connectedFrom =
@@ -67,7 +80,7 @@ export default class Server extends KiteServer {
       .tell('rope.identify', connectionId)
       .then(info => {
         this.logger.debug('kiteinfo', info)
-        const { kiteInfo, useragent, api = [], signatures = {} } = info
+        const { token, kiteInfo, useragent, api = [], signatures = {} } = info
         const { id: kiteId } = kiteInfo
 
         this.logger.info('A new kite registered with ID of', kiteId)
@@ -79,30 +92,41 @@ export default class Server extends KiteServer {
           let environment = `${browser.name} ${browser.version}`
           kiteInfo.environment = identifyData.environment = environment
         }
-        kite.tell('rope.identified', [identifyData])
 
-        this.ctx.connections.set(kiteId, {
-          api,
-          kite,
-          headers,
-          kiteInfo,
-          signatures,
-          connectedFrom: remoteIp,
-        })
+        this.authenticateKite(token, (err, auth) => {
+          if (err) throw err
 
-        this.ropeApi.notifyNodes('node.added', { kiteId })
-        this.ropeApi.logConnections()
+          identifyData.auth = auth
+          kite.tell('rope.identified', [identifyData])
 
-        connection.on('close', () => {
-          this.logger.info('A kite left the facility :(', kiteId)
-          this.ctx.connections.delete(kiteId)
-          this.ropeApi.unsubscribeFromAll(kiteId)
-          this.ropeApi.notifyNodes('node.removed', { kiteId })
+          this.ctx.connections.set(kiteId, {
+            api,
+            kite,
+            auth,
+            headers,
+            kiteInfo,
+            signatures,
+            connectedFrom,
+          })
+
+          this.ropeApi.notifyNodes('node.added', { kiteId })
           this.ropeApi.logConnections()
+
+          connection.on('close', () => {
+            this.logger.info('A kite left the facility :(', kiteId)
+            this.ctx.connections.delete(kiteId)
+            this.ropeApi.unsubscribeFromAll(kiteId)
+            this.ropeApi.notifyNodes('node.removed', { kiteId })
+            this.ropeApi.logConnections()
+          })
         })
-        return info
       })
       .catch(err => {
+        kite.tell('rope.error', {
+          message: 'Identification failed.',
+          disconnect: true,
+        })
+
         this.logger.error('Error while register connection', err)
         this.logger.info('Dropping outdated kite', connectionId, connectedFrom)
         this.ctx.blackListCandidates[connectedFrom] |= 0
