@@ -63,6 +63,10 @@ export default class RopeApi {
   runOnKite(options, callback) {
     let { requester, args: { kiteId, method, args = [] } } = options
 
+    if (!method || /^rope\./.test(method)) {
+      return callback({ message: 'Method is not valid' })
+    }
+
     if (!kiteId) {
       let kites = this.filterByMethod(method)
       kiteId = kites[Math.floor(Math.random() * kites.length)]
@@ -102,7 +106,7 @@ export default class RopeApi {
         eventName,
         requester,
         subscribe: false,
-        message: `Now ubsubscribed from ${eventName}`,
+        message: `Now unsubscribed from ${eventName}`,
       })
     )
   }
