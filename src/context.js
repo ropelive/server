@@ -6,7 +6,7 @@ export default class RopeContext {
       ['node.added', new Set()],
       ['node.removed', new Set()],
     ])
-
+    this.execHistory = new Array()
     this.blackListCandidates = new Object()
     this.blackList = new Set()
   }

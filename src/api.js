@@ -1,4 +1,4 @@
-import { MAX_QUERY_LIMIT, LOG_LEVEL } from './constants'
+import { TYPES, MAX_EVENT_LIMIT, MAX_QUERY_LIMIT, LOG_LEVEL } from './constants'
 import readline from 'readline'
 
 function __share(target, name, method, as) {
@@ -76,7 +76,11 @@ export default class RopeApi {
       return callback({ message: 'No kite available' })
     }
 
-    this.notifyNodes('node.exec', { from: requester, to: kiteId, method })
+    this.addToExecHistory({
+      from: requester,
+      to: kiteId,
+      method,
+    })
 
     this.ctx.connections
       .get(kiteId)
