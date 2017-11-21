@@ -106,6 +106,10 @@ export default class Server extends KiteServer {
           identifyData.auth = auth
           kite.tell('rope.identified', [identifyData])
 
+          this.ctx.blackList.delete(connectedFrom)
+          if (this.ctx.blackListCandidates[connectedFrom])
+            this.ctx.blackListCandidates[connectedFrom] = 0
+
           let type = getType(kiteInfo.environment)
 
           this.ctx.connections.set(kiteId, {
@@ -138,7 +142,7 @@ export default class Server extends KiteServer {
         })
 
         this.logger.error('Error while register connection', err)
-        this.logger.info('Dropping outdated kite', connectionId, connectedFrom)
+        this.logger.info('Dropping invalid kite', connectionId, connectedFrom)
         this.ctx.blackListCandidates[connectedFrom] |= 0
         this.ctx.blackListCandidates[connectedFrom]++
 
