@@ -1,10 +1,17 @@
-import { PORT, BLACKLIST_LIMIT, LOG_LEVEL, AUTH } from './constants'
+import { PORT, TYPES, BLACKLIST_LIMIT, LOG_LEVEL, AUTH } from './constants'
 
 import RopeApi from './api'
 import RopeContext from './context'
 
 import { KiteServer, KiteApi } from 'kite.js'
 import uaParser from 'ua-parser-js'
+
+function getType(env) {
+  for (let [type, regex] of TYPES) {
+    if (regex.test(env)) return type
+  }
+  return ''
+}
 
 export default class Server extends KiteServer {
   constructor(options = {}) {
@@ -49,13 +56,26 @@ export default class Server extends KiteServer {
     this.ropeApi.logConnections()
   }
 
+  authenticateKite(token, callback) {
+    if (!token) {
+      callback(null, { authenticated: false })
+      return
+    }
+
+    this.logger.info('Authentication requested with token', token)
+    this.logger.info('Authentication not implemented yet')
+
+    // TODO Implement verification token from AUTH_SERVER ~ GG
+    callback(null, { authenticated: false })
+  }
+
   registerConnection(connection) {
     const headers = connection.connection.headers || {}
-    const remoteIp =
+    const connectedFrom =
       headers['x-forwarded-for'] || connection.connection.remoteAddress
 
-    if (this.ctx.blackList.has(remoteIp)) {
-      this.logger.debug('connection request from blacklisted ip', remoteIp)
+    if (this.ctx.blackList.has(connectedFrom)) {
+      this.logger.debug('connection request from blacklisted ip', connectedFrom)
       connection.close()
       return
     }
@@ -67,49 +87,70 @@ export default class Server extends KiteServer {
       .tell('rope.identify', connectionId)
       .then(info => {
         this.logger.debug('kiteinfo', info)
-        const { kiteInfo, useragent, api = [], signatures = {} } = info
+        const { token, kiteInfo, useragent, api = [], signatures = {} } = info
         const { id: kiteId } = kiteInfo
 
         this.logger.info('A new kite registered with ID of', kiteId)
 
-        const identifyData = { id: kiteId }
+        const identifyData = { id: kiteId, connectedFrom }
+
         if (kiteInfo.environment == 'Browser' && useragent) {
           let { browser } = uaParser(useragent)
           let environment = `${browser.name} ${browser.version}`
           kiteInfo.environment = identifyData.environment = environment
         }
-        kite.tell('rope.identified', [identifyData])
 
-        this.ctx.connections.set(kiteId, {
-          api,
-          kite,
-          headers,
-          kiteInfo,
-          signatures,
-          connectedFrom: remoteIp,
-        })
+        this.authenticateKite(token, (err, auth) => {
+          if (err) throw err
 
-        this.ropeApi.notifyNodes('node.added', { kiteId })
-        this.ropeApi.logConnections()
+          identifyData.auth = auth
+          kite.tell('rope.identified', [identifyData])
 
-        connection.on('close', () => {
-          this.logger.info('A kite left the facility :(', kiteId)
-          this.ctx.connections.delete(kiteId)
-          this.ropeApi.unsubscribeFromAll(kiteId)
-          this.ropeApi.notifyNodes('node.removed', { kiteId })
+          this.ctx.blackList.delete(connectedFrom)
+          if (this.ctx.blackListCandidates[connectedFrom])
+            this.ctx.blackListCandidates[connectedFrom] = 0
+
+          let type = getType(kiteInfo.environment)
+
+          this.ctx.connections.set(kiteId, {
+            api,
+            kite,
+            auth,
+            type,
+            headers,
+            kiteInfo,
+            signatures,
+            connectedFrom,
+          })
+
+          this.ropeApi.notifyNodes('node.added', { kiteId })
           this.ropeApi.logConnections()
+
+          connection.on('close', () => {
+            this.logger.info('A kite left the facility :(', kiteId)
+            this.ctx.connections.delete(kiteId)
+            this.ropeApi.unsubscribeFromAll(kiteId)
+            this.ropeApi.notifyNodes('node.removed', { kiteId })
+            this.ropeApi.logConnections()
+          })
         })
-        return info
       })
       .catch(err => {
+        kite.tell('rope.error', {
+          message: 'Identification failed.',
+          disconnect: true,
+        })
+
         this.logger.error('Error while register connection', err)
-        this.logger.info('Dropping outdated kite', connectionId, remoteIp)
-        this.ctx.blackListCandidates[remoteIp] |= 0
-        this.ctx.blackListCandidates[remoteIp]++
-        if (this.ctx.blackListCandidates[remoteIp] > BLACKLIST_LIMIT) {
-          this.logger.info(`Connections from ${remoteIp} blacklisted`)
-          this.ctx.blackList.add(remoteIp)
+        this.logger.info('Dropping invalid kite', connectionId, connectedFrom)
+        this.ctx.blackListCandidates[connectedFrom] |= 0
+        this.ctx.blackListCandidates[connectedFrom]++
+
+        if (this.ctx.blackListCandidates[connectedFrom] > BLACKLIST_LIMIT) {
+          this.logger.info(`Connections from ${connectedFrom} blacklisted`)
+          this.ctx.blackList.add(connectedFrom)
         }
+
         connection.close()
       })
   }

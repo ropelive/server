@@ -1,4 +1,4 @@
-import { MAX_QUERY_LIMIT, LOG_LEVEL } from './constants'
+import { TYPES, MAX_EVENT_LIMIT, MAX_QUERY_LIMIT, LOG_LEVEL } from './constants'
 import readline from 'readline'
 
 function __share(target, name, method, as) {
@@ -56,12 +56,26 @@ export default class RopeApi {
 
   @shareAs('count')
   getKiteCount(options, callback) {
-    callback(null, this.ctx.connections.size)
+    let res = { total: this.ctx.connections.size }
+
+    for (let [type] of TYPES) {
+      res[type] = 0
+    }
+
+    for (let [kiteId, connection] of this.ctx.connections) {
+      res[connection.type]++
+    }
+
+    callback(null, res)
   }
 
   @shareAs('run')
   runOnKite(options, callback) {
     let { requester, args: { kiteId, method, args = [] } } = options
+
+    if (!method || /^rope\./.test(method)) {
+      return callback({ message: 'Method is not valid' })
+    }
 
     if (!kiteId) {
       let kites = this.filterByMethod(method)
@@ -72,7 +86,11 @@ export default class RopeApi {
       return callback({ message: 'No kite available' })
     }
 
-    this.notifyNodes('node.exec', { from: requester, to: kiteId, method })
+    this.addToExecHistory({
+      from: requester,
+      to: kiteId,
+      method,
+    })
 
     this.ctx.connections
       .get(kiteId)
@@ -102,9 +120,22 @@ export default class RopeApi {
         eventName,
         requester,
         subscribe: false,
-        message: `Now ubsubscribed from ${eventName}`,
+        message: `Now unsubscribed from ${eventName}`,
       })
     )
+  }
+
+  @share
+  history(options, callback) {
+    let { skip = 0, limit = 10 } = options.args
+    callback(null, this.ctx.execHistory.slice(skip, skip + limit))
+  }
+
+  addToExecHistory(execEvent) {
+    execEvent.time = Date.now()
+    this.notifyNodes('node.exec', execEvent)
+    if (this.ctx.execHistory.unshift(execEvent) > MAX_EVENT_LIMIT)
+      this.ctx.execHistory.pop()
   }
 
   filterByMethod(method) {

@@ -6,7 +6,7 @@ export default class RopeContext {
       ['node.added', new Set()],
       ['node.removed', new Set()],
     ])
-
+    this.execHistory = new Array()
     this.blackListCandidates = new Object()
     this.blackList = new Set()
   }
@@ -18,7 +18,7 @@ export default class RopeContext {
       return { id: kiteId }
     }
 
-    let { api, signatures, connectedFrom, kiteInfo } = connection
-    return { id: kiteId, api, signatures, connectedFrom, kiteInfo }
+    let { api, signatures, connectedFrom, type, kiteInfo } = connection
+    return { id: kiteId, api, signatures, connectedFrom, kiteInfo, type }
   }
 }
