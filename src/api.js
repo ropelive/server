@@ -115,6 +115,19 @@ export default class RopeApi {
     )
   }
 
+  @share
+  history(options, callback) {
+    let { skip = 0, limit = 10 } = options.args
+    callback(null, this.ctx.execHistory.slice(skip, skip + limit))
+  }
+
+  addToExecHistory(execEvent) {
+    execEvent.time = Date.now()
+    this.notifyNodes('node.exec', execEvent)
+    if (this.ctx.execHistory.unshift(execEvent) > MAX_EVENT_LIMIT)
+      this.ctx.execHistory.pop()
+  }
+
   filterByMethod(method) {
     let res = []
     for (let [kiteId, connection] of this.ctx.connections) {
