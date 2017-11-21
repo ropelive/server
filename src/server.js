@@ -1,10 +1,17 @@
-import { PORT, BLACKLIST_LIMIT, LOG_LEVEL, AUTH } from './constants'
+import { PORT, TYPES, BLACKLIST_LIMIT, LOG_LEVEL, AUTH } from './constants'
 
 import RopeApi from './api'
 import RopeContext from './context'
 
 import { KiteServer, KiteApi } from 'kite.js'
 import uaParser from 'ua-parser-js'
+
+function getType(env) {
+  for (let [type, regex] of TYPES) {
+    if (regex.test(env)) return type
+  }
+  return ''
+}
 
 export default class Server extends KiteServer {
   constructor(options = {}) {
@@ -99,10 +106,13 @@ export default class Server extends KiteServer {
           identifyData.auth = auth
           kite.tell('rope.identified', [identifyData])
 
+          let type = getType(kiteInfo.environment)
+
           this.ctx.connections.set(kiteId, {
             api,
             kite,
             auth,
+            type,
             headers,
             kiteInfo,
             signatures,
