@@ -56,7 +56,17 @@ export default class RopeApi {
 
   @shareAs('count')
   getKiteCount(options, callback) {
-    callback(null, this.ctx.connections.size)
+    let res = { total: this.ctx.connections.size }
+
+    for (let [type] of TYPES) {
+      res[type] = 0
+    }
+
+    for (let [kiteId, connection] of this.ctx.connections) {
+      res[connection.type]++
+    }
+
+    callback(null, res)
   }
 
   @shareAs('run')
