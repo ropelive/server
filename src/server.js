@@ -35,19 +35,35 @@ export default class Server extends KiteServer {
   // FIXME in kite.js::KiteServer
   getKiteInfo() {}
 
-  handleMessage(proto, message) {
-    let kite
-    if (message.arguments[0] && (kite = message.arguments[0].kite)) {
-      this.logger.debug(`${kite.id} requested to run ${message.method}`)
-      this.logger.debug(proto)
-      // do not touch internal methods
-      if (!/^kite\./.test(message.method)) {
-        let args = message.arguments[0].withArgs || {}
-        message.arguments[0].withArgs = [{ args, requester: kite.id }]
+  handleMessage(proto, message, kiteInstance) {
+    let kite, args
+
+    this.logger.debug(`handleMessage args were:`, message.arguments)
+
+    if (message.arguments[0]) {
+      if ((kite = message.arguments[0].kite)) {
+        this.logger.debug(`${kite.id} requested to run ${message.method}`)
+        this.logger.debug(proto)
+        // do not touch internal methods
+        if (!/^kite\./.test(message.method)) {
+          let requester = kite.id
+          if (message.arguments.length == 0) {
+            message.arguments = [{ error: message.arguments[0], requester }]
+          } else if ((args = message.arguments[0].withArgs)) {
+            message.arguments[0].withArgs = [{ args, requester }]
+          }
+        }
+      } else if (
+        message.arguments.length == 1 &&
+        !Object.keys(message.arguments[0]).includes('error')
+      ) {
+        message.arguments = [{ error: message.arguments[0] }]
       }
     }
 
-    super.handleMessage(proto, message)
+    this.logger.debug(`handleMessage args now:`, message.arguments)
+
+    super.handleMessage(proto, message, kiteInstance)
   }
 
   listen(port = PORT) {
