@@ -92,11 +92,20 @@ export default class RopeApi {
       method,
     })
 
+    this.logger.debug(`going to call ${method} on ${kiteId}`)
+    this.logger.debug('args were:', args)
+
     this.ctx.connections
       .get(kiteId)
       .kite.tell(method, args)
-      .then(res => callback(null, res))
-      .catch(err => callback(err))
+      .then(res => {
+        this.logger.debug('got response success:', res)
+        callback(null, res)
+      })
+      .catch(err => {
+        this.logger.debug('got response fail:', err)
+        callback(err)
+      })
   }
 
   @share
