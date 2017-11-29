@@ -8,7 +8,7 @@ export const AUTH = false
 export const TYPES = [
   ['firefox', /firefox/i],
   ['safari', /safari/i],
-  ['chrome', /chrome/i],
+  ['chrome', /chrom/i],
   ['opera', /opera/i],
   ['edge', /^edge/i],
   ['js', /^node\.js/i],
