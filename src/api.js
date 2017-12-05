@@ -35,13 +35,19 @@ export default class RopeApi {
 
   @shareAs('query')
   queryKite({ args, requester }, callback) {
-    const method = args.method
+    const { method, region } = args
     let res = []
 
-    if (method) {
+    if (method || region) {
       for (let [kiteId, connection] of this.ctx.connections) {
         if (connection.api.includes(method)) {
-          res.push(kiteId)
+          if (region) {
+            if (connection.kiteInfo.region == region) {
+              res.push(kiteId)
+            }
+          } else {
+            res.push(kiteId)
+          }
         }
         if (res.length >= MAX_QUERY_LIMIT) break
       }
